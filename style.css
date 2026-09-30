@@ -1,0 +1,441 @@
+/* ============================================================
+   style.css — iPhone のホーム画面から使う前提のレイアウト
+   ============================================================ */
+
+:root {
+  --bg: #f7f7f5;
+  --card: #ffffff;
+  --fg: #1c1c1e;
+  --muted: #6b6b70;
+  --line: #e2e2dd;
+  --accent: #2f6f5f;
+  --accent-fg: #ffffff;
+  --shared: #4a5f8a;
+  --over: #c0392b;
+  --warn: #b8860b;
+  --good: #2f6f5f;
+  --radius: 12px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #131315;
+    --card: #1e1e21;
+    --fg: #f2f2f0;
+    --muted: #9b9ba1;
+    --line: #34343a;
+    --accent: #4f9e88;
+    --accent-fg: #06120e;
+    --shared: #7d92c4;
+    --over: #ff7b6b;
+    --warn: #e0b74a;
+    --good: #4f9e88;
+  }
+}
+
+* { box-sizing: border-box; }
+
+/* display を指定したクラスが付いていても、hidden 属性があれば必ず隠す */
+[hidden] { display: none !important; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background: var(--bg);
+  color: var(--fg);
+  font: 16px/1.5 -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Noto Sans JP", sans-serif;
+  -webkit-text-size-adjust: 100%;
+}
+
+/* ---------- ヘッダ ---------- */
+
+#appbar {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: calc(env(safe-area-inset-top) + 10px) 16px 10px;
+  background: var(--accent);
+  color: var(--accent-fg);
+}
+
+body.shared #appbar { background: var(--shared); }
+
+.bar-title { font-weight: 600; font-size: 15px; }
+
+.mode-btn {
+  border: 1px solid currentColor;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: 14px;
+  padding: 4px 14px;
+  border-radius: 999px;
+  min-height: 32px;
+}
+
+body.shared .mode-btn { background: rgba(255, 255, 255, .18); font-weight: 600; }
+
+.banner {
+  margin: 0;
+  padding: 10px 16px;
+  background: var(--warn);
+  color: #1c1c1e;
+  font-size: 14px;
+}
+
+/* ---------- 本体 ---------- */
+
+main {
+  padding: 16px 16px calc(env(safe-area-inset-bottom) + 84px);
+  max-width: 640px;
+  margin: 0 auto;
+}
+
+h2 {
+  font-size: 15px;
+  margin: 28px 0 10px;
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.hint {
+  font-size: 13px;
+  color: var(--muted);
+  margin: 0 0 12px;
+}
+
+/* ---------- 入力フォーム ---------- */
+
+.seg.kind { margin-bottom: 12px; }
+
+/* 収入を入力中だと一目で分かるように、金額欄の枠と文字を緑にする */
+form.income .amount-row { border-color: var(--good); }
+form.income .amount-row .yen,
+form.income .amount-row input { color: var(--good); }
+
+.amount-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 10px 14px;
+  margin-bottom: 12px;
+}
+
+.amount-row .yen { font-size: 24px; color: var(--muted); }
+
+.amount-row input {
+  flex: 1;
+  border: 0;
+  background: transparent;
+  color: var(--fg);
+  font: 600 30px/1.2 inherit;
+  text-align: right;
+  min-width: 0;
+}
+
+.amount-row input:focus { outline: none; }
+
+.fld {
+  display: block;
+  margin-bottom: 12px;
+  border: 0;
+  padding: 0;
+}
+
+.fld > span {
+  display: block;
+  font-size: 13px;
+  color: var(--muted);
+  margin-bottom: 4px;
+}
+
+.fld input, .fld select, .fld textarea {
+  width: 100%;
+  font: inherit;
+  color: var(--fg);
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 10px 12px;
+  min-height: 44px;
+}
+
+.fld textarea { min-height: 72px; resize: vertical; }
+
+/* 3択のセグメント */
+
+.seg { display: flex; gap: 6px; }
+
+.seg label { flex: 1; position: relative; }
+
+/* 見えないラジオをラベルの中に閉じ込める。基準がないと画面の外へはみ出して横スクロールが出る */
+.seg input { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; opacity: 0; pointer-events: none; }
+
+.seg span {
+  display: block;
+  text-align: center;
+  padding: 10px 4px;
+  font-size: 14px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--card);
+  color: var(--muted);
+}
+
+.seg input:checked + span {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-fg);
+  font-weight: 600;
+}
+
+.check {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  margin: 4px 0 18px;
+}
+
+.check input { width: 22px; height: 22px; }
+
+button.primary {
+  width: 100%;
+  font: 600 17px inherit;
+  padding: 14px;
+  border: 0;
+  border-radius: 12px;
+  background: var(--accent);
+  color: var(--accent-fg);
+  min-height: 50px;
+}
+
+button.ghost {
+  font: inherit;
+  padding: 10px 16px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--card);
+  color: var(--fg);
+  min-height: 44px;
+}
+
+button.ghost.small { padding: 6px 10px; font-size: 13px; min-height: 0; }
+
+.inline-form { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-bottom: 8px; }
+.inline-form input { flex: 1; font: inherit; padding: 10px 12px; min-height: 44px;
+  border: 1px solid var(--line); border-radius: 10px; background: var(--card); color: var(--fg); }
+.inline-form button { font: inherit; padding: 10px 16px; border: 1px solid var(--line);
+  border-radius: 10px; background: var(--card); color: var(--fg); min-height: 44px; }
+
+.filelabel { display: inline-flex; align-items: center; cursor: pointer; }
+
+/* ---------- 数字の並び ---------- */
+
+.summary {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.stat {
+  flex: 1;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 12px 8px;
+  text-align: center;
+}
+
+.stat b { display: block; font-size: 19px; font-variant-numeric: tabular-nums; }
+.stat small { display: block; color: var(--muted); font-size: 12px; margin-top: 2px; }
+
+.over { color: var(--over); }
+.good { color: var(--good); }
+.warn { color: var(--warn); }
+
+/* ---------- 予算バー ---------- */
+
+ul { list-style: none; margin: 0; padding: 0; }
+
+.budgets li {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 10px 12px;
+  margin-bottom: 8px;
+}
+
+.brow {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 14px;
+  margin-bottom: 6px;
+  font-variant-numeric: tabular-nums;
+}
+
+.bar {
+  height: 8px;
+  border-radius: 999px;
+  background: var(--line);
+  overflow: hidden;
+}
+
+.bar i {
+  display: block;
+  height: 100%;
+  background: var(--accent);
+  border-radius: 999px;
+}
+
+.bar i.warn { background: var(--warn); }
+.bar i.over { background: var(--over); }
+
+.budgets.editable li.edit {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.budgets.editable li.edit span { flex: 1; font-size: 14px; }
+
+.budgets.editable li.edit input {
+  width: 110px;
+  font: inherit;
+  text-align: right;
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--bg);
+  color: var(--fg);
+  min-height: 40px;
+}
+
+/* ---------- 明細リスト ---------- */
+
+.entries li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 10px 12px;
+  margin-bottom: 6px;
+}
+
+.entries .d { color: var(--muted); font-size: 13px; width: 44px; flex: none; }
+.entries .c { flex: 1; font-size: 15px; min-width: 0; }
+.entries .c small { display: block; color: var(--muted); font-size: 12px; }
+.entries .a { font-variant-numeric: tabular-nums; font-weight: 600; }
+.entries .a.income { color: var(--good); }
+
+.income-note { margin: 0 0 12px; font-size: 14px; color: var(--muted); }
+.income-note b { color: var(--good); font-variant-numeric: tabular-nums; }
+
+.entries .del {
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  font-size: 15px;
+  padding: 6px;
+  min-width: 32px;
+}
+
+.tag {
+  font-style: normal;
+  font-size: 11px;
+  padding: 1px 6px;
+  border-radius: 999px;
+  margin-left: 6px;
+  background: var(--line);
+  color: var(--muted);
+}
+
+.tag.waste { background: var(--over); color: #fff; }
+.tag.good { background: var(--good); color: #fff; }
+
+.entries li.rev { align-items: flex-start; }
+.entries li.rev .d { width: 96px; }
+
+.empty { color: var(--muted); font-size: 14px; justify-content: center; }
+
+.waste-note { font-size: 14px; margin: 0 0 12px; }
+
+/* ---------- 週の移動 ---------- */
+
+.nav-week {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 12px;
+  font-size: 14px;
+}
+
+.nav-week button {
+  font: inherit;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  color: var(--fg);
+  padding: 8px 12px;
+  min-height: 40px;
+}
+
+.nav-week button:disabled { opacity: .4; }
+
+.review-form { margin-top: 20px; }
+
+/* ---------- カテゴリ設定 ---------- */
+
+.cats li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 10px 12px;
+  margin-bottom: 6px;
+}
+
+.cats li > span { flex: 1; font-size: 15px; }
+.cats li.hidden-cat { opacity: .5; }
+
+.mini { font-size: 12px; color: var(--muted); display: flex; align-items: center; gap: 4px; }
+
+/* ---------- タブバー ---------- */
+
+#tabbar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  background: var(--card);
+  border-top: 1px solid var(--line);
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+#tabbar button {
+  flex: 1;
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  font-size: 13px;
+  padding: 12px 4px;
+  min-height: 52px;
+}
+
+#tabbar button.on { color: var(--accent); font-weight: 600; }

@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="theme-color" content="#2f6f5f">
+<title>週予算の家計簿</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-180.png">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header id="appbar">
+  <div class="bar-title">
+    <span id="week-label">—</span>
+  </div>
+  <button id="mode-btn" class="mode-btn" type="button">個人</button>
+</header>
+
+<div id="banner" class="banner" hidden></div>
+
+<main>
+
+  <!-- ============ 入力 ============ -->
+  <section id="tab-input" class="tab">
+    <form id="entry-form" autocomplete="off">
+      <div class="seg kind" id="f-kind">
+        <label><input type="radio" name="kind" value="expense" checked><span>支出</span></label>
+        <label><input type="radio" name="kind" value="income"><span>収入</span></label>
+      </div>
+
+      <div class="amount-row">
+        <span class="yen">¥</span>
+        <input id="f-amount" type="number" inputmode="numeric" step="1" min="0" placeholder="0" required>
+      </div>
+
+      <label class="fld">
+        <span>カテゴリ</span>
+        <select id="f-category" required></select>
+      </label>
+
+      <label class="fld">
+        <span>日付</span>
+        <input id="f-date" type="date" required>
+      </label>
+
+      <fieldset class="fld" id="f-sat-wrap">
+        <span>この出費は</span>
+        <div class="seg" id="f-satisfaction">
+          <label><input type="radio" name="sat" value="good"><span>よかった</span></label>
+          <label><input type="radio" name="sat" value="ok" checked><span>ふつう</span></label>
+          <label><input type="radio" name="sat" value="waste"><span>無駄だった</span></label>
+        </div>
+      </fieldset>
+
+      <label class="fld">
+        <span>メモ</span>
+        <input id="f-memo" type="text" maxlength="100" placeholder="任意">
+      </label>
+
+      <label class="check">
+        <input id="f-private" type="checkbox">
+        <span>プライベート（共有モードでは完全に隠す）</span>
+      </label>
+
+      <button id="f-submit" class="primary" type="submit">記録する</button>
+    </form>
+
+    <h2>最近の記録</h2>
+    <ul id="recent" class="entries"></ul>
+  </section>
+
+  <!-- ============ 今週 ============ -->
+  <section id="tab-week" class="tab" hidden>
+    <div class="summary">
+      <div class="stat"><b id="w-spent">¥0</b><small>今週の支出</small></div>
+      <div class="stat"><b id="w-left">¥0</b><small>予算残り</small></div>
+      <div class="stat"><b id="w-perday">¥0</b><small>今日使える額</small></div>
+    </div>
+    <p id="w-income" class="income-note" hidden></p>
+    <ul id="budget-list" class="budgets"></ul>
+    <h2>今週の明細</h2>
+    <ul id="week-entries" class="entries"></ul>
+  </section>
+
+  <!-- ============ 振り返り ============ -->
+  <section id="tab-review" class="tab" hidden>
+    <div class="nav-week">
+      <button id="rv-prev" type="button">&lt; 前の週</button>
+      <span id="rv-label"></span>
+      <button id="rv-next" type="button">次の週 &gt;</button>
+    </div>
+
+    <div class="summary">
+      <div class="stat"><b id="rv-spent">¥0</b><small>支出</small></div>
+      <div class="stat"><b id="rv-budget">¥0</b><small>予算</small></div>
+      <div class="stat"><b id="rv-diff">¥0</b><small>差額</small></div>
+    </div>
+
+    <p id="rv-waste" class="waste-note"></p>
+    <ul id="rv-list" class="budgets"></ul>
+
+    <form id="review-form" class="review-form">
+      <fieldset class="fld">
+        <span>今週の自己評価</span>
+        <div class="seg stars" id="rv-rating">
+          <label><input type="radio" name="rating" value="1"><span>1</span></label>
+          <label><input type="radio" name="rating" value="2"><span>2</span></label>
+          <label><input type="radio" name="rating" value="3"><span>3</span></label>
+          <label><input type="radio" name="rating" value="4"><span>4</span></label>
+          <label><input type="radio" name="rating" value="5"><span>5</span></label>
+        </div>
+      </fieldset>
+      <label class="fld">
+        <span>気づいたこと</span>
+        <textarea id="rv-good" rows="3" placeholder="何にお金が流れていた？"></textarea>
+      </label>
+      <label class="fld">
+        <span>来週やること</span>
+        <textarea id="rv-plan" rows="3" placeholder="ひとつだけ決める"></textarea>
+      </label>
+      <button class="primary" type="submit">振り返りを保存</button>
+    </form>
+
+    <h2>過去の振り返り</h2>
+    <ul id="rv-history" class="entries"></ul>
+  </section>
+
+  <!-- ============ 設定 ============ -->
+  <section id="tab-settings" class="tab" hidden>
+    <h2>週予算</h2>
+    <p class="hint">ここで決めた額が、毎週はじめにその週の予算として固定されます。過去の週の予算は変わりません。</p>
+    <ul id="cat-budget-list" class="budgets editable"></ul>
+    <button id="save-budgets" class="primary" type="button">既定の週予算を保存</button>
+
+    <h2>支出のカテゴリ</h2>
+    <ul id="cat-list" class="cats"></ul>
+    <form id="cat-form" class="inline-form">
+      <input id="new-cat" type="text" placeholder="新しいカテゴリ名" maxlength="20" required>
+      <button type="submit">追加</button>
+    </form>
+
+    <h2>収入のカテゴリ</h2>
+    <ul id="income-cat-list" class="cats"></ul>
+    <form id="income-cat-form" class="inline-form">
+      <input id="new-income-cat" type="text" placeholder="新しい収入カテゴリ名" maxlength="20" required>
+      <button type="submit">追加</button>
+    </form>
+
+    <h2>週のはじまり</h2>
+    <label class="fld">
+      <span>開始曜日</span>
+      <select id="set-dow">
+        <option value="1">月曜</option>
+        <option value="0">日曜</option>
+        <option value="2">火曜</option>
+        <option value="3">水曜</option>
+        <option value="4">木曜</option>
+        <option value="5">金曜</option>
+        <option value="6">土曜</option>
+      </select>
+    </label>
+
+    <h2>共有モードのロック</h2>
+    <p class="hint">共有モードから個人モードに戻るときだけ PIN を求めます。隠す方向はいつでもワンタップ。</p>
+    <form id="pin-form" class="inline-form">
+      <input id="set-pin" type="password" inputmode="numeric" placeholder="4桁以上の数字" maxlength="12">
+      <button type="submit">PINを設定</button>
+    </form>
+    <button id="clear-pin" class="ghost" type="button">PINを解除</button>
+
+    <h2>通知</h2>
+    <p class="hint">iPhone ではホーム画面に追加したときだけ通知が使えます。バックグラウンドからの定期通知は OS の制約で飛ばせないので、週末の振り返りは iOS のリマインダーアプリと併用してください。アプリを開いたときの未レビュー通知はここで有効にできます。</p>
+    <button id="notify-btn" class="ghost" type="button">通知を許可する</button>
+
+    <h2>バックアップ</h2>
+    <p class="hint">データはこの端末の中だけにあります。Safari がデータを消してしまうことがあるので、ときどき書き出してください。書き出したファイルはそのまま SQLite として開けます。</p>
+    <div class="inline-form">
+      <button id="export-btn" class="ghost" type="button">書き出す</button>
+      <label class="ghost filelabel">読み込む<input id="import-input" type="file" accept=".sqlite,.db" hidden></label>
+    </div>
+  </section>
+
+</main>
+
+<nav id="tabbar">
+  <button data-tab="input" class="on" type="button"><span>入力</span></button>
+  <button data-tab="week" type="button"><span>今週</span></button>
+  <button data-tab="review" type="button"><span>振り返り</span></button>
+  <button data-tab="settings" type="button"><span>設定</span></button>
+</nav>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.3/sql-wasm.js"></script>
+<script src="db.js"></script>
+<script src="repo.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
