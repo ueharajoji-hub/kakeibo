@@ -537,3 +537,11 @@ ul { list-style: none; margin: 0; padding: 0; }
   width: 76px;
   text-align: right;
 }
+
+/* PIN 欄。input type="password" は使わない
+   （ログイン画面と見なされてブラウザの警告を招くため）。
+   伏せ字は見た目だけで、照合は端末の中で完結する。 */
+.masked {
+  -webkit-text-security: disc;
+  text-security: disc;
+}

@@ -173,9 +173,10 @@
     </label>
 
     <h2>共有モードのロック</h2>
-    <p class="hint">共有モードから個人モードに戻るときだけ PIN を求めます。隠す方向はいつでもワンタップ。</p>
+    <p class="hint">共有モードから個人モードに戻るときだけ PIN を求めます。隠す方向はいつでもワンタップ。
+      この PIN はこの端末の中だけで照合します。どこにも送りません。</p>
     <form id="pin-form" class="inline-form">
-      <input id="set-pin" type="password" inputmode="numeric" placeholder="4桁以上の数字" maxlength="12">
+      <input id="set-pin" type="text" class="masked" inputmode="numeric" autocomplete="off" placeholder="4桁以上の数字" maxlength="12">
       <button type="submit">PINを設定</button>
     </form>
     <button id="clear-pin" class="ghost" type="button">PINを解除</button>
