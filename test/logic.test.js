@@ -156,10 +156,16 @@ KB.db.init().then(() => {
   check('共有モードの明細からプライベート収入が消える',
         repo.entriesInWeek(ws, false).filter(e => e.kind === 'income').length, 1);
   check('入力欄の収入カテゴリ一覧', repo.visibleCategories('income', true).length, 2);
-  repo.addCategory('副業', 'income');
+  const sideId = repo.addCategory('副業', 'income');
   check('収入カテゴリを追加できる',
         repo.categories('income', false).map(c => c.name), ['給与', 'その他収入', '副業']);
-  check('支出カテゴリは増えていない', repo.categories('expense', false).length, 10);
+  check('追加したカテゴリの id が返る（入力画面でそのまま選ぶため）',
+        repo.categories('income', false).find(c => c.name === '副業').id, sideId);
+  const partId = repo.addCategory('サブスク', 'expense');
+  check('支出カテゴリの id も返る',
+        repo.categories('expense', false).find(c => c.name === 'サブスク').id, partId);
+  check('追加したカテゴリは別物（収入と支出で id が違う）', sideId === partId, false);
+  check('支出カテゴリは1件増えた', repo.categories('expense', false).length, 11);
 
   console.log('\n[予算スナップショット]');
   check('食費の週予算は既定の6000', personal.rows.find(r => r.name === '食費').budget, 6000);

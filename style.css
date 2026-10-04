@@ -439,3 +439,101 @@ ul { list-style: none; margin: 0; padding: 0; }
 }
 
 #tabbar button.on { color: var(--accent); font-weight: 600; }
+
+/* ---------- 円グラフ（カテゴリ別の割合） ----------
+
+   データの色は固定の6枠。順番は決め打ちで、使う色を増やしたり
+   回して使い回したりしない（隣どうしが見分けづらくなるため）。
+   色は「色覚の型が違っても隣の色と区別がつくか」を検証して選んである。
+   明るい側は白地に対して 3:1 を切る色があるので、
+   凡例に必ず名前・割合・金額を出して、色だけに頼らせない。
+*/
+
+.chart {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 16px;
+  margin: 0 0 12px;
+
+  --s0: #8a8a84;   /* ほか（まとめた分） */
+  --s1: #2a78d6;
+  --s2: #eb6834;
+  --s3: #1baf7a;
+  --s4: #eda100;
+  --s5: #e87ba4;
+}
+
+@media (prefers-color-scheme: dark) {
+  .chart {
+    --s0: #7c7c76;
+    --s1: #3987e5;
+    --s2: #d95926;
+    --s3: #199e70;
+    --s4: #c98500;
+    --s5: #d55181;
+  }
+}
+
+.donut {
+  display: block;
+  width: 164px;
+  height: 164px;
+  margin: 0 auto 14px;
+}
+
+/* 区切りの隙間は線を描かずに背景を見せて作る（枠線を足すとうるさくなる） */
+.donut .seg { fill: none; stroke-width: 18; }
+
+.donut .s0 { stroke: var(--s0); }
+.donut .s1 { stroke: var(--s1); }
+.donut .s2 { stroke: var(--s2); }
+.donut .s3 { stroke: var(--s3); }
+.donut .s4 { stroke: var(--s4); }
+.donut .s5 { stroke: var(--s5); }
+
+/* 文字にデータの色は使わない。色は隣の丸が持つ */
+.donut .ttl {
+  fill: var(--fg);
+  font: 600 15px/1 inherit;
+  font-variant-numeric: tabular-nums;
+  text-anchor: middle;
+}
+
+.donut .cap { fill: var(--muted); font-size: 8px; text-anchor: middle; }
+
+.legend { list-style: none; margin: 0; padding: 0; }
+
+.legend li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 0;
+  font-size: 14px;
+}
+
+.legend li + li { border-top: 1px solid var(--line); }
+
+.legend .sw { width: 10px; height: 10px; border-radius: 3px; flex: none; }
+.legend .sw.s0 { background: var(--s0); }
+.legend .sw.s1 { background: var(--s1); }
+.legend .sw.s2 { background: var(--s2); }
+.legend .sw.s3 { background: var(--s3); }
+.legend .sw.s4 { background: var(--s4); }
+.legend .sw.s5 { background: var(--s5); }
+
+.legend .nm { flex: 1; min-width: 0; }
+
+.legend .pc {
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+  width: 40px;
+  text-align: right;
+}
+
+.legend .am {
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  width: 76px;
+  text-align: right;
+}

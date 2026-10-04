@@ -91,6 +91,8 @@
       "SELECT COALESCE(MAX(sort_order), 0) + 1 AS n FROM categories WHERE kind = ?", [kind]);
     db.run("INSERT INTO categories (name, kind, sort_order) VALUES (?, ?, ?)",
            [name, kind, row.n]);
+    // 入力画面から足したときに、そのまま選べるよう id を返す
+    return db.one("SELECT last_insert_rowid() AS id").id;
   }
 
   function renameCategory(id, name) {

@@ -98,7 +98,8 @@
     sel.innerHTML = cats.map(function (c) {
       return '<option value="' + c.id + '" data-priv="' + c.is_private_default + '">' +
              esc(c.name) + (c.is_private_default ? ' 🔒' : '') + '</option>';
-    }).join('');
+    }).join('') +
+      '<option value="' + NEW_CATEGORY + '">＋ 新しいカテゴリを作る…</option>';
     if (keep) sel.value = keep;
     // 前の選択肢が消えたとき（共有モードへの切替・支出/収入の切替）は先頭に戻す
     if (!sel.value && sel.options.length) sel.selectedIndex = 0;
@@ -115,12 +116,31 @@
     fillCategorySelect();
   }
 
+  // 入力画面から直接カテゴリを足せるようにするための、選択肢ひとつ分の目印。
+  // 設定タブまで行かなくても、記録のついでに増やせる。
+  var NEW_CATEGORY = 'new';
+
+  function addCategoryFromInput(sel) {
+    var label = state.kind === 'income' ? '収入' : '支出';
+    var name = prompt('新しい' + label + 'カテゴリの名前を入れてください。');
+    name = name === null ? '' : name.trim();
+    if (!name) { sel.value = sel.dataset.prev || ''; syncPrivateCheckbox(); return; }
+    var id = repo.addCategory(name, state.kind);
+    renderAll();
+    sel.value = String(id);
+    syncPrivateCheckbox();
+    showBanner('「' + name + '」を追加しました。');
+  }
+
   // カテゴリを選んだら、チェックをそのカテゴリの既定値に合わせる。
   // 入力のたびに思い出さなくていいようにするための仕掛け。
   // 外す方向も合わせないと、嗜好品のあとに記録した食費までプライベートになる。
   function syncPrivateCheckbox() {
-    var opt = $('f-category').selectedOptions[0];
+    var sel = $('f-category');
+    var opt = sel.selectedOptions[0];
     if (!opt) return;
+    // 「作る…」を選んだときに戻せるよう、直前の選択を覚えておく
+    if (sel.value !== NEW_CATEGORY) sel.dataset.prev = sel.value;
     $('f-private').checked = opt.dataset.priv === '1';
   }
 
@@ -155,10 +175,12 @@
     ev.preventDefault();
     var amount = parseInt($('f-amount').value, 10);
     if (!(amount > 0)) { alert('金額を入れてください。'); return; }
+    var categoryId = parseInt($('f-category').value, 10);
+    if (!categoryId) { alert('カテゴリを選んでください。'); return; }
     repo.addEntry({
       date: $('f-date').value,
       amount_yen: amount,
-      category_id: parseInt($('f-category').value, 10),
+      category_id: categoryId,
       memo: $('f-memo').value.trim(),
       satisfaction: (document.querySelector('input[name="sat"]:checked') || {}).value || 'ok',
       is_private: $('f-private').checked
@@ -167,6 +189,91 @@
     $('f-memo').value = '';
     $('f-amount').focus();
     renderAll();
+  }
+
+  // ---------- 円グラフ（カテゴリ別の割合） ----------
+  //
+  // 色は6枠まで。7色を超えると隣どうしが見分けづらくなるので、
+  // 上位5カテゴリ＋「ほか」にまとめてから描く。
+  // 元になる行は weekBudgetRows が返したものなので、
+  // プライベートの除外はすでに済んでいる（ここで SQL は書かない）。
+
+  var DONUT_TOP = 5;
+
+  function donutSegments(rows) {
+    var used = rows.filter(function (r) { return r.spent > 0; })
+                   .sort(function (a, b) { return b.spent - a.spent; });
+    var segs = used.slice(0, DONUT_TOP).map(function (r, i) {
+      return {
+        name: r.name + (r.is_private_default ? ' 🔒' : ''),
+        amount: r.spent,
+        slot: i + 1
+      };
+    });
+    var rest = used.slice(DONUT_TOP);
+    if (rest.length) {
+      segs.push({
+        name: 'ほか ' + rest.length + '件',
+        amount: rest.reduce(function (n, r) { return n + r.spent; }, 0),
+        slot: 0                      // 0 はグレー。実体のあるカテゴリではないので色を与えない
+      });
+    }
+    return segs;
+  }
+
+  // 四捨五入しただけだと合計が 99% や 101% になる。
+  // 端数の大きい順に 1% ずつ配って、必ず 100% に揃える。
+  function sharePercents(amounts, total) {
+    var exact = amounts.map(function (a) { return a / total * 100; });
+    var pct = exact.map(Math.floor);
+    var short = 100 - pct.reduce(function (n, p) { return n + p; }, 0);
+    exact.map(function (e, i) { return { i: i, frac: e - Math.floor(e) }; })
+      .sort(function (a, b) { return b.frac - a.frac; })
+      .slice(0, Math.max(0, short))
+      .forEach(function (x) { pct[x.i] += 1; });
+    return pct;
+  }
+
+  var DONUT_R = 46;            // viewBox 120 のなかでの半径
+  var DONUT_GAP_PX = 2;        // 区切りの隙間
+
+  function renderDonut(box, rows, caption) {
+    var segs = donutSegments(rows);
+    if (!segs.length) { box.hidden = true; box.innerHTML = ''; return; }
+    box.hidden = false;
+
+    var total = segs.reduce(function (n, s) { return n + s.amount; }, 0);
+    var pcts = sharePercents(segs.map(function (s) { return s.amount; }), total);
+
+    // pathLength を 100 に固定すると、長さをそのまま割合で書ける
+    var gap = DONUT_GAP_PX / (2 * Math.PI * DONUT_R) * 100;
+    var at = 0;
+    var arcs = segs.map(function (s) {
+      var len = s.amount / total * 100;
+      // 隙間を引いても消えないように下限を置く（ごく小さい割合でも線が残る）
+      var draw = Math.max(len - gap, 0.6);
+      var seg = '<circle class="seg s' + s.slot + '" cx="60" cy="60" r="' + DONUT_R + '"' +
+        ' pathLength="100" stroke-dasharray="' + draw.toFixed(2) + ' ' + (100 - draw).toFixed(2) + '"' +
+        ' stroke-dashoffset="' + (-at).toFixed(2) + '"></circle>';
+      at += len;
+      return seg;
+    }).join('');
+
+    box.innerHTML =
+      '<svg class="donut" viewBox="0 0 120 120" role="img" aria-label="' +
+        esc(caption + 'の内訳 合計' + yen(total)) + '">' +
+        '<g transform="rotate(-90 60 60)">' + arcs + '</g>' +
+        '<text class="ttl" x="60" y="60">' + yen(total) + '</text>' +
+        '<text class="cap" x="60" y="72">' + esc(caption) + '</text>' +
+      '</svg>' +
+      '<ul class="legend">' + segs.map(function (s, i) {
+        return '<li>' +
+          '<i class="sw s' + s.slot + '"></i>' +
+          '<span class="nm">' + esc(s.name) + '</span>' +
+          '<span class="pc">' + pcts[i] + '%</span>' +
+          '<span class="am">' + yen(s.amount) + '</span>' +
+          '</li>';
+      }).join('') + '</ul>';
   }
 
   // ---------- 今週タブ ----------
@@ -187,6 +294,7 @@
     $('w-income').innerHTML = '今週の収入 <b>+' + yen(inc.total) + '</b>（' + inc.n + '件）';
 
     renderBudgetRows($('budget-list'), t.rows);
+    renderDonut($('w-chart'), t.rows, '今週の支出');
     renderEntryList($('week-entries'), repo.entriesInWeek(ws, includePrivate()));
   }
 
@@ -228,6 +336,7 @@
       : '「無駄だった」と付けた出費はありません。';
 
     renderBudgetRows($('rv-list'), t.rows);
+    renderDonut($('rv-chart'), t.rows, repo.formatWeek(ws) + ' の支出');
 
     var rev = repo.getReview(ws);
     var radio = document.querySelector('input[name="rating"][value="' + (rev && rev.rating) + '"]');
@@ -401,7 +510,10 @@
   function wire() {
     $('mode-btn').addEventListener('click', toggleMode);
     $('entry-form').addEventListener('submit', onSubmitEntry);
-    $('f-category').addEventListener('change', syncPrivateCheckbox);
+    $('f-category').addEventListener('change', function () {
+      if (this.value === NEW_CATEGORY) { addCategoryFromInput(this); return; }
+      syncPrivateCheckbox();
+    });
     $('f-kind').addEventListener('change', function (ev) {
       state.kind = ev.target.value;
       applyKind();
