@@ -47,6 +47,11 @@ html, body {
   -webkit-text-size-adjust: 100%;
 }
 
+/* iOS Safari は 16px 未満の入力欄にフォーカスすると自動でズームし、
+   入力を終えてもズームが戻らない。入力系のコントロールは 16px 以上を保つ。
+   金額欄は後ろの .amount-row input で 30px に上書きする。 */
+input, select, textarea { font-size: 16px; }
+
 /* ---------- ヘッダ ---------- */
 
 #appbar {
@@ -135,7 +140,10 @@ form.income .amount-row input { color: var(--good); }
   border: 0;
   background: transparent;
   color: var(--fg);
-  font: 600 30px/1.2 inherit;
+  font-family: inherit;
+  font-size: 30px;
+  font-weight: 600;
+  line-height: 1.2;
   text-align: right;
   min-width: 0;
 }
@@ -208,7 +216,9 @@ form.income .amount-row input { color: var(--good); }
 
 button.primary {
   width: 100%;
-  font: 600 17px inherit;
+  font-family: inherit;
+  font-size: 17px;
+  font-weight: 600;
   padding: 14px;
   border: 0;
   border-radius: 12px;
@@ -495,7 +505,10 @@ ul { list-style: none; margin: 0; padding: 0; }
 /* 文字にデータの色は使わない。色は隣の丸が持つ */
 .donut .ttl {
   fill: var(--fg);
-  font: 600 15px/1 inherit;
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1;
   font-variant-numeric: tabular-nums;
   text-anchor: middle;
 }
@@ -537,6 +550,17 @@ ul { list-style: none; margin: 0; padding: 0; }
   width: 76px;
   text-align: right;
 }
+
+/* ロック解除パネル（共有 → 個人）。画面内に置き、prompt() は使わない */
+.unlock form {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 16px;
+  margin-bottom: 16px;
+}
+.unlock h2 { margin-top: 0; }
+.unlock-error { color: var(--over); font-size: 14px; margin: 8px 0 0; }
 
 /* PIN 欄。input type="password" は使わない
    （ログイン画面と見なされてブラウザの警告を招くため）。
