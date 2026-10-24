@@ -67,6 +67,7 @@
   function toggleMode() {
     if (state.mode === 'personal') {
       // 隠す方向は確認なしで即座に
+      cancelUnlock();
       state.mode = 'shared';
       applyMode();
       renderAll();
@@ -74,19 +75,42 @@
     }
     var stored = db.getSetting('pin_hash');
     if (!stored) {
+      cancelUnlock();
       state.mode = 'personal';
       applyMode();
       renderAll();
       return;
     }
-    var input = prompt('個人モードに戻ります。PIN を入力してください。');
-    if (input === null) return;
+    // PIN は prompt() では聞かない。ダイアログで暗証番号を入力させる形は
+    // 詐欺サイトの手口と見分けがつかず、Safari の詐欺警告を招くため、
+    // 画面内のフォーム（#unlock）で完結させる。
+    $('unlock').hidden = false;
+    $('unlock-error').hidden = true;
+    $('unlock-pin').value = '';
+    $('unlock-pin').focus();
+  }
+
+  function onUnlock(ev) {
+    ev.preventDefault();
+    var input = $('unlock-pin').value;
     hashPin(input).then(function (h) {
-      if (h !== stored) { alert('PIN が違います。'); return; }
+      if (h !== db.getSetting('pin_hash')) {
+        $('unlock-error').hidden = false;
+        $('unlock-pin').value = '';
+        $('unlock-pin').focus();
+        return;
+      }
+      $('unlock').hidden = true;
+      $('unlock-pin').value = '';
       state.mode = 'personal';
       applyMode();
       renderAll();
     });
+  }
+
+  function cancelUnlock() {
+    $('unlock').hidden = true;
+    $('unlock-pin').value = '';
   }
 
   // ---------- 入力タブ ----------
@@ -509,6 +533,8 @@
 
   function wire() {
     $('mode-btn').addEventListener('click', toggleMode);
+    $('unlock-form').addEventListener('submit', onUnlock);
+    $('unlock-cancel').addEventListener('click', cancelUnlock);
     $('entry-form').addEventListener('submit', onSubmitEntry);
     $('f-category').addEventListener('change', function () {
       if (this.value === NEW_CATEGORY) { addCategoryFromInput(this); return; }

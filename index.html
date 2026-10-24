@@ -25,6 +25,25 @@
 
 <main>
 
+  <!-- ============ ロック解除（共有 → 個人） ============
+       PIN は画面内のフォームで聞く。prompt() のダイアログで暗証番号を
+       入力させる形は詐欺サイトの手口と見分けがつかず、ブラウザの
+       詐欺警告を招くため使わない。 -->
+  <section id="unlock" class="unlock" hidden>
+    <form id="unlock-form">
+      <h2>個人モードに戻る</h2>
+      <p class="hint">共有モードのロック用PINを入れてください。このPINはこのアプリ専用で、
+        この端末の中だけで照合します。サーバや外部に送ることはありません。
+        銀行やカードの暗証番号ではありません。</p>
+      <div class="inline-form">
+        <input id="unlock-pin" type="text" class="masked" inputmode="numeric" autocomplete="off" placeholder="PIN" maxlength="12">
+        <button type="submit">個人モードに戻る</button>
+        <button id="unlock-cancel" type="button">キャンセル</button>
+      </div>
+      <p id="unlock-error" class="unlock-error" hidden>PINが違います。</p>
+    </form>
+  </section>
+
   <!-- ============ 入力 ============ -->
   <section id="tab-input" class="tab">
     <form id="entry-form" autocomplete="off">
@@ -174,7 +193,8 @@
 
     <h2>共有モードのロック</h2>
     <p class="hint">共有モードから個人モードに戻るときだけ PIN を求めます。隠す方向はいつでもワンタップ。
-      この PIN はこの端末の中だけで照合します。どこにも送りません。</p>
+      この PIN はこの端末の中だけで照合します。どこにも送りません。
+      銀行やカードの暗証番号とは違う、このアプリ専用のものを決めてください。</p>
     <form id="pin-form" class="inline-form">
       <input id="set-pin" type="text" class="masked" inputmode="numeric" autocomplete="off" placeholder="4桁以上の数字" maxlength="12">
       <button type="submit">PINを設定</button>
