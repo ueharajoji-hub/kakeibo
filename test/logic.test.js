@@ -197,6 +197,31 @@ KB.db.init().then(() => {
   check('未来の週は予算を固定しない',
         db.one('SELECT COUNT(*) AS n FROM week_budgets WHERE week_start = ?', [future]).n, 0);
 
+  console.log('\n[月タブ]');
+  check('2026-09-30 の月は 2026-09', repo.monthOf('2026-09-30'), '2026-09');
+  check('2026-09 の範囲は 9/1〜9/30 の30日',
+        repo.monthRange('2026-09'), { from: '2026-09-01', to: '2026-09-30', days: 30 });
+  check('うるう年の2月は29日',
+        repo.monthRange('2028-02'), { from: '2028-02-01', to: '2028-02-29', days: 29 });
+  check('12月 + 1 = 翌年1月', repo.shiftMonth('2026-12', 1), '2027-01');
+  check('1月 - 1 = 前年12月', repo.shiftMonth('2026-01', -1), '2025-12');
+  check('月の表示', repo.formatMonth('2026-09'), '2026年9月');
+  check('月予算 = 週6000 × 30日 ÷ 7 = 25714', repo.monthlyBudgetYen(6000, 30), 25714);
+  check('月予算 = 週6000 × 28日 ÷ 7 = 24000', repo.monthlyBudgetYen(6000, 28), 24000);
+  check('月予算 = 週7000 × 31日 ÷ 7 = 31000', repo.monthlyBudgetYen(7000, 31), 31000);
+  check('個人モードの9月の支出合計 = 3100', repo.monthTotals('2026-09', true).spent, 3100);
+  check('共有モードの9月の支出合計 = 2000', repo.monthTotals('2026-09', false).spent, 2000);
+  check('食費の9月の月予算は既定9000から 38571',
+        repo.monthTotals('2026-09', true).rows.find(r => r.name === '食費').budget, 38571);
+  check('個人モードの9月の収入：1件 200000円',
+        [repo.monthIncome('2026-09', true).n, repo.monthIncome('2026-09', true).total], [1, 200000]);
+  check('個人モードの10月の収入：1件 30000円',
+        [repo.monthIncome('2026-10', true).n, repo.monthIncome('2026-10', true).total], [1, 30000]);
+  check('共有モードの10月の収入：プライベートなので0件',
+        [repo.monthIncome('2026-10', false).n, repo.monthIncome('2026-10', false).total], [0, 0]);
+  check('個人モードの9月の明細は5件', repo.entriesInMonth('2026-09', true).length, 5);
+  check('共有モードの9月の明細は3件（嗜好品2件が消える）', repo.entriesInMonth('2026-09', false).length, 3);
+
   console.log('\n' + pass + ' passed, ' + fail + ' failed');
   process.exit(fail ? 1 : 0);
 }).catch(err => { console.error('起動に失敗:', err); process.exit(1); });

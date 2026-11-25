@@ -212,6 +212,74 @@
     return { budget: budget, spent: spent, rows: rows };
   }
 
+  // ---------- 月 ----------
+
+  function monthOf(dateStr) { return dateStr.slice(0, 7); } // 'YYYY-MM-DD' → 'YYYY-MM'
+
+  function currentMonth() { return monthOf(today()); }
+
+  function monthRange(month) { // 'YYYY-MM' → { from, to, days }
+    var days = new Date(+month.slice(0, 4), +month.slice(5, 7), 0).getDate();
+    return { from: month + '-01', to: month + '-' + pad2(days), days: days };
+  }
+
+  function shiftMonth(month, n) {
+    var d = new Date(+month.slice(0, 4), +month.slice(5, 7) - 1 + n, 1);
+    return d.getFullYear() + '-' + pad2(d.getMonth() + 1);
+  }
+
+  function formatMonth(month) {
+    return (+month.slice(0, 4)) + '年' + (+month.slice(5, 7)) + '月';
+  }
+
+  // 月予算は週予算から自動で出す：週予算 × その月の日数 ÷ 7。
+  // ×4 だと5週ある月で少なく出るので、日数で按分する。
+  // 週予算と違いスナップショットは取らず、今の既定値から毎回計算する。
+  function monthlyBudgetYen(weeklyYen, daysInMonth) {
+    return Math.round(weeklyYen * daysInMonth / 7);
+  }
+
+  function entriesInMonth(month, includePrivate) {
+    var r = monthRange(month);
+    return db.all(
+      ENTRY_COLS + " FROM entries e JOIN categories c ON c.id = e.category_id" +
+      " WHERE e.date BETWEEN ? AND ?" + privateClause(includePrivate) +
+      " ORDER BY e.date DESC, e.id DESC", [r.from, r.to]);
+  }
+
+  function monthBudgetRows(month, includePrivate) {
+    var r = monthRange(month);
+    var privEntry = includePrivate ? "" : " AND e.is_private = 0";
+    var rows = db.all(
+      "SELECT c.id, c.name, c.is_private_default," +
+      " c.default_weekly_budget_yen AS weekly," +
+      " COALESCE((SELECT SUM(e.amount_yen) FROM entries e" +
+      "   WHERE e.category_id = c.id AND e.date BETWEEN :s AND :e" + privEntry + "), 0) AS spent" +
+      " FROM categories c" +
+      " WHERE c.kind = 'expense' AND c.is_hidden = 0" +
+      (includePrivate ? "" : " AND c.is_private_default = 0") +
+      " ORDER BY c.sort_order, c.id",
+      { ':s': r.from, ':e': r.to });
+    return rows.map(function (row) {
+      return {
+        id: row.id, name: row.name, is_private_default: row.is_private_default,
+        budget: monthlyBudgetYen(row.weekly, r.days), spent: row.spent
+      };
+    });
+  }
+
+  function monthTotals(month, includePrivate) {
+    var rows = monthBudgetRows(month, includePrivate);
+    var budget = 0, spent = 0;
+    rows.forEach(function (r) { budget += r.budget; spent += r.spent; });
+    return { budget: budget, spent: spent, rows: rows };
+  }
+
+  function monthIncome(month, includePrivate) {
+    var r = monthRange(month);
+    return incomeTotal(r.from, r.to, includePrivate);
+  }
+
   // 自分で「無駄だった」と付けた出費の合計。振り返りで一番効く数字。
   function wasteTotal(weekStart, includePrivate) {
     return db.one(
@@ -280,6 +348,18 @@
     entriesInWeek: entriesInWeek,
     incomeTotal: incomeTotal,
     weekIncome: weekIncome,
+
+    // 月
+    monthOf: monthOf,
+    currentMonth: currentMonth,
+    monthRange: monthRange,
+    shiftMonth: shiftMonth,
+    formatMonth: formatMonth,
+    monthlyBudgetYen: monthlyBudgetYen,
+    entriesInMonth: entriesInMonth,
+    monthBudgetRows: monthBudgetRows,
+    monthTotals: monthTotals,
+    monthIncome: monthIncome,
 
     // 予算
     setWeekBudget: setWeekBudget,

@@ -10,6 +10,7 @@
   var state = {
     mode: 'personal',   // 'personal' | 'shared'
     reviewWeek: null,   // 振り返りタブが見ている週
+    month: null,        // 月タブが見ている月（'YYYY-MM'）
     tab: 'input',
     kind: 'expense'     // 入力タブで記録しているのが支出か収入か
   };
@@ -341,6 +342,31 @@
     }).join('');
   }
 
+  // ---------- 月タブ ----------
+
+  function renderMonth() {
+    var m = state.month;
+    $('m-label').textContent = repo.formatMonth(m);
+
+    var t = repo.monthTotals(m, includePrivate());
+    var left = t.budget - t.spent;
+    $('m-spent').textContent = yen(t.spent);
+    $('m-budget').textContent = yen(t.budget);
+    $('m-left').textContent = yen(left);
+    $('m-left').className = left < 0 ? 'over' : '';
+
+    var inc = repo.monthIncome(m, includePrivate());
+    $('m-income').hidden = !inc.n;
+    $('m-income').innerHTML = '収入 <b>+' + yen(inc.total) + '</b>（' + inc.n + '件）';
+
+    renderBudgetRows($('m-budget-list'), t.rows);
+    renderDonut($('m-chart'), t.rows, repo.formatMonth(m) + 'の支出');
+    renderEntryList($('month-entries'), repo.entriesInMonth(m, includePrivate()));
+
+    // 未来の月には進ませない
+    $('m-next').disabled = (repo.shiftMonth(m, 1) > repo.currentMonth());
+  }
+
   // ---------- 振り返りタブ ----------
 
   function renderReview() {
@@ -511,7 +537,7 @@
 
   function switchTab(name) {
     state.tab = name;
-    ['input', 'week', 'review', 'settings'].forEach(function (t) {
+    ['input', 'week', 'month', 'review', 'settings'].forEach(function (t) {
       $('tab-' + t).hidden = (t !== name);
     });
     Array.prototype.forEach.call(document.querySelectorAll('#tabbar button'), function (b) {
@@ -525,6 +551,7 @@
     fillCategorySelect();
     if (state.tab === 'input') renderRecent();
     if (state.tab === 'week') renderWeek();
+    if (state.tab === 'month') renderMonth();
     if (state.tab === 'review') renderReview();
     if (state.tab === 'settings') renderSettings();
   }
@@ -557,6 +584,17 @@
 
     Array.prototype.forEach.call(document.querySelectorAll('#tabbar button'), function (b) {
       b.addEventListener('click', function () { switchTab(b.dataset.tab); });
+    });
+
+    $('m-prev').addEventListener('click', function () {
+      state.month = repo.shiftMonth(state.month, -1);
+      renderMonth();
+    });
+    $('m-next').addEventListener('click', function () {
+      var next = repo.shiftMonth(state.month, 1);
+      if (next > repo.currentMonth()) return;
+      state.month = next;
+      renderMonth();
     });
 
     $('rv-prev').addEventListener('click', function () {
@@ -656,6 +694,7 @@
     } catch (e) { /* localStorage が無くても動く */ }
 
     state.reviewWeek = repo.pendingReviewWeek() || repo.addDays(repo.currentWeekStart(), -7);
+    state.month = repo.currentMonth();
     $('f-date').value = repo.today();
 
     applyMode();

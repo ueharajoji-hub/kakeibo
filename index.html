@@ -110,6 +110,30 @@
     <ul id="week-entries" class="entries"></ul>
   </section>
 
+  <!-- ============ 月 ============ -->
+  <section id="tab-month" class="tab" hidden>
+    <div class="nav-week">
+      <button id="m-prev" type="button">&lt; 前の月</button>
+      <span id="m-label"></span>
+      <button id="m-next" type="button">次の月 &gt;</button>
+    </div>
+
+    <div class="summary">
+      <div class="stat"><b id="m-spent">¥0</b><small>支出</small></div>
+      <div class="stat"><b id="m-left">¥0</b><small>予算残り</small></div>
+      <div class="stat"><b id="m-budget">¥0</b><small>月予算</small></div>
+    </div>
+    <p class="hint">月予算は、設定の週予算 × その月の日数 ÷ 7 で自動計算しています。</p>
+    <p id="m-income" class="income-note" hidden></p>
+    <ul id="m-budget-list" class="budgets"></ul>
+
+    <h2>何に使ったか</h2>
+    <figure id="m-chart" class="chart" hidden></figure>
+
+    <h2>明細</h2>
+    <ul id="month-entries" class="entries"></ul>
+  </section>
+
   <!-- ============ 振り返り ============ -->
   <section id="tab-review" class="tab" hidden>
     <div class="nav-week">
@@ -218,6 +242,7 @@
 <nav id="tabbar">
   <button data-tab="input" class="on" type="button"><span>入力</span></button>
   <button data-tab="week" type="button"><span>今週</span></button>
+  <button data-tab="month" type="button"><span>月</span></button>
   <button data-tab="review" type="button"><span>振り返り</span></button>
   <button data-tab="settings" type="button"><span>設定</span></button>
 </nav>
